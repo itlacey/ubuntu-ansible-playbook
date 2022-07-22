@@ -1,0 +1,35 @@
+- name: install latest applications on all hosts
+  hosts: "*"
+  tasks:
+    - include_vars: s3fs.yml
+    - name: Make sure the mount points of the buckets are present
+      become: yes
+      file:
+        path: "{{ mountpoint }}"
+        state: directory
+      with_items: "{{ bucket }}"
+      
+    - name: Make sure the access keys of buckets are present
+      become: yes
+      copy:
+        src: /home/ike/.passwd-s3fs
+        dest: /etc/.passwd-s3fs
+        mode: 0600
+      with_items: "{{ bucket }}"
+
+    - name: Make sure mountpoints are present in fstab
+      become: yes
+      mount:
+        name: "{{ mountpoint }}"
+        src: "s3fs#{{ bucket }}"
+        fstype: fuse
+        opts: "rw,passwd_file=/etc/.passwd-s3fs,nonempty,allow_other,uid=1000,gid=1000"
+        state: present
+      with_items: "{{ bucket }}"
+
+    - name: Remount to be sure everything including access
+      become: yes
+      command: "{{ item }}"
+      with_items:
+      - umount -f {{ mountpoint }}
+      - mount -a 

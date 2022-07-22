@@ -1,0 +1,81 @@
+- name: install latest docker containers on all hosts
+  hosts: "mrbones"
+  tasks:
+  - include_vars: vault.yml
+  - name: Log into DockerHub
+    become: true
+    docker_login:
+      username: itlacey
+      password: "{{ password }}"
+
+  - name: Create Portainer
+    docker_container:
+      name: portainer
+      image: portainer/portainer-ce:2.9.3
+      ports:
+        - "8000:8000"
+        - "9443:9443"
+      restart_policy: always
+      state: started
+      volumes:
+        - /mnt/r2d2/portainer:/data
+        - /var/run/docker.sock:/var/run/docker.sock
+    become: true
+
+  - name: Create CodeServer
+    docker_container:
+      name: CodeServer
+      image: itlacey/code-server:v1
+      ports:
+        - "81:8443"
+        - "9442:9443"
+      restart_policy: unless-stopped
+      state: started
+      volumes:
+        - /mnt/r2d2/python:/code
+      env:
+        PASSWORD: "{{ password }}"
+        SUDO_PASSWORD: "{{ password }}"
+    become: true
+
+  - name: Create home-assistant
+    docker_container:
+      name: home-assistant
+      image: ghcr.io/home-assistant/home-assistant:stable
+      volumes:
+        - /mnt/r2d2/home-assistant:/config
+        - /etc/localtime:/etc/localtime:ro
+      network_mode: host
+      ports:
+        - "8123:8123"
+      restart_policy: unless-stopped
+      state: started
+    become: true
+
+  - name: Create pihole docker image
+    docker_container:
+      name: pi-hole
+      image: pihole/pihole
+      ports:
+        - "80:80"
+      volumes:
+        - /mnt/r2d2/pihole/etc-pihole:/etc/pihole
+        - /mnt/r2d2/pihole/etc-dnsmasq.d:/etc/dnsmasq.d'
+      network_mode: host
+      env:
+        TZ: America/New_York
+        WEBPASSWORD: "{{ password }}"
+        PIHOLE_UID: "0"
+      restart_policy: unless-stopped
+    become: true
+  - name: Create homer docker image
+    docker_container:
+      name: homer
+      image: b4bz/homer
+      ports:
+        - "8080:8080"
+      volumes:
+        - /mnt/r2d2/homer:/www/assets
+      network_mode: host
+      restart_policy: unless-stopped
+    become: true

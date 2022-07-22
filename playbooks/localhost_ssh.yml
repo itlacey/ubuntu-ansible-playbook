@@ -1,0 +1,13 @@
+- name: generate SSH key
+  hosts: localhost
+  remote_user: ike
+  connection: local
+  tasks:
+    - include_vars: general.yml
+    - name: generate SSH key "{{ssh_key_file}}"
+      openssh_keypair:
+        path: "~/.ssh/{{ssh_key_file}}"
+        type: rsa
+        size: 4096
+        state: present
+        force: no

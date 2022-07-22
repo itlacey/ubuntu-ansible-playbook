@@ -1,0 +1,23 @@
+- name: install latest applications on all hosts
+  hosts: "*"
+  tasks:
+    - name: Update all packages to their latest version
+      become: yes
+      apt:
+    - name: install python 3
+      become: yes
+      apt:
+        name: python3
+        state: latest
+    - name: install apps
+      apt:
+        name: 
+          - s3fs
+          - avahi-daemon
+          - git
+          - python3-pip
+        state: latest
+      become: true
+    - name: install docker 
+      become: yes
+      command: pip install docker-py
