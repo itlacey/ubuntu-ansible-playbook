@@ -68,14 +68,52 @@
         PIHOLE_UID: "0"
       restart_policy: unless-stopped
     become: true
+
   - name: Create homer docker image
     docker_container:
       name: homer
       image: b4bz/homer
       ports:
-        - "8080:8080"
+        - "8181:8080"
       volumes:
         - /mnt/r2d2/homer:/www/assets
+      network_mode: host
+      restart_policy: unless-stopped
+    become: true
+
+  - name: Create firefly III DB docker image
+    docker_container:
+      name: mariadb
+      image: mariadb
+      env:
+        MYSQL_RANDOM_ROOT_PASSWORD: "yes"
+        MYSQL_USER: firefly
+        MYSQL_PASSWORD: "{{ password }}"
+        MYSQL_DATABASE: firefly
+      volumes:
+        - /mnt/r2d2/firefly_iii_db:/var/lib/mysql
+      network_mode: host
+      restart_policy: unless-stopped
+    become: true
+
+  - name: Create firefly III docker image
+    docker_container:
+      name: firefly_iii
+      image: fireflyiii/core:latest
+      env:
+        DB_HOST: "0.0.0.0" 
+        DB_DATABASE: firefly 
+        DB_USERNAME: firefly
+        DB_PORT: "3306" 
+        DB_CONNECTION: mysql 
+        DB_PASSWORD: "{{ password }}" 
+        APP_URL: https://firefly.mrbones.com 
+        TRUSTED_PROXIES: "**"
+        APP_KEY: VZWxrVA00VbBEMxXVPDuDEwfC3Hr6ryb
+      ports:
+        - "8080:8080"
+      volumes:
+        - /mnt/r2d2/firefly_iii_upload:/var/www/html/storage/upload
       network_mode: host
       restart_policy: unless-stopped
     become: true
