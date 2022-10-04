@@ -41,6 +41,7 @@
   - name: Create home-assistant
     docker_container:
       name: home-assistant
+      pull: true
       image: ghcr.io/home-assistant/home-assistant:stable
       volumes:
         - /mnt/r2d2/home-assistant:/config
